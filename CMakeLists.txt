@@ -4,27 +4,18 @@ project(ASCIIVIDEO)
 
 set(CMAKE_BUILD_TYPE Release)
 
+include("${CMAKE_CURRENT_BINARY_DIR}/Release/generators/conan_toolchain.cmake")
+
 find_package(OpenCV REQUIRED)
-
-if(NOT OpenCV_FOUND)
-	message(SEND_ERROR "Failed to find OpenCV")
-	return()
-else()
-	include_directories(${OpenCV_INCLUDE_DIRS})
-endif()
-
-find_package(Boost COMPONENTS system REQUIRED)
-
-include_directories(
-	include/
-	include/*
-
-)
-
+find_package(Boost COMPONENTS program_options filesystem REQUIRED)
 
 add_executable(
 	output
 	main.cpp
 )
 
-target_link_libraries(output ${OpenCV_LIBS})
+target_link_libraries(output 
+	${OpenCV_LIBS}
+	Boost::program_options 
+	Boost::filesystem
+)

@@ -7,6 +7,9 @@
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
 
+#include <boost/program_options.hpp>
+#include <boost/filesystem.hpp>
+
 inline void resizeImage(cv::Mat &imageToResize, int maxSize, double scaleFactor)
 {   
     int width = imageToResize.cols;
@@ -38,11 +41,43 @@ inline char getSymbolFromGrayValue(int value)
 
 int main(int argc, char **argv)
 {
-    cv::VideoCapture cap(argv[1]);
+    namespace po = boost::program_options;
+
+    po::options_description desc("Allowed options");
+    desc.add_options()
+        ("help", "produce help message")
+        ("video-path", po::value<std::string>(), "Path to video file");
+
+    po::variables_map vm;
+    po::store(po::parse_command_line(argc, argv, desc), vm);
+    po::notify(vm);
+
+    if (vm.count("help"))
+    {
+        std::cout << desc << std::endl;
+        return EXIT_SUCCESS;
+    }
+
+    if (vm.count("video-path") == 0)
+    {
+        std::cout << "Please specify video path" << std::endl;
+        std::cout << desc << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    std::string videoPath = vm["video-path"].as<std::string>();
+
+    if (!boost::filesystem::exists(videoPath))
+    {
+        std::cout << "No video file: " << videoPath << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    cv::VideoCapture cap(videoPath);
 
     if(!cap.isOpened())
     {
-        std::cout << "No video file: " << argv[1] << std::endl;
+        std::cout << "Can't open file: " << videoPath << std::endl;
         return EXIT_FAILURE;
     }
 
@@ -50,7 +85,6 @@ int main(int argc, char **argv)
 
     while(true)
     {
-
         cv::Mat img;
         cap >> img;
 
@@ -74,7 +108,8 @@ int main(int argc, char **argv)
         }  
 
         std::this_thread::sleep_for(std::chrono::milliseconds(1000 / fps));  
-        system("clear");
+
+        auto tmp = std::system("clear");
     }
         
     return EXIT_SUCCESS;
